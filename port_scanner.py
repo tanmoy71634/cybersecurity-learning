@@ -6,7 +6,13 @@ SERVICES = {
     22: "SSH",
     80: "HTTP",
     443: "HTTPS",
-    3389: "RDP"
+    3389: "RDP",
+    20: "FTP",
+     23: "TELENT", 
+     25: "SMTP", 
+     53: "DNS", 
+     143: "IMAP", 
+     445: "SMB"
 }
 
 
