@@ -1,40 +1,90 @@
+from collections import defaultdict
+
 successful_logins = 0
 failed_logins = 0
 alerts = []
+event_counts = defaultdict(int)
 
-with open("events.log", "r") as file:
-    for line in file:
+try:
+    with open("events.log", "r") as file:
 
-        if not line.strip():
-            continue
-            
-        parts = line.strip().split()
-        
-       
-        if len(parts) < 2:
-            continue
+        for line in file:
 
-        event_id = parts[0]
-        event_type = parts[1]
+            # Skip empty lines
+            if not line.strip():
+                continue
 
-        print(event_id, event_type)
+            parts = line.strip().split()
 
+            # Skip malformed lines
+            if len(parts) < 2:
+                continue
 
-        if event_id == "4624":
-            successful_logins += 1
-        elif event_id == "4625":
-            failed_logins += 1
-        elif event_id == "1102":
-            alerts.append("Security Log Cleared (Event ID 1102)")
+            event_id = parts[0]
+            event_type = parts[1]
 
+            # Count all events
+            event_counts[event_id] += 1
 
-print("\n--- SUMMARY ---")
-print(f"Successful Logins: {successful_logins}")
-print(f"Failed Logins: {failed_logins}")
+            # Successful login
+            if event_id == "4624":
+                successful_logins += 1
 
-print("\nALERTS:")
+            # Failed login
+            elif event_id == "4625":
+                failed_logins += 1
+
+            # Security log cleared
+            elif event_id == "1102":
+                alerts.append(
+                    "[HIGH] Security Log Cleared (Event ID 1102)"
+                )
+
+            # New user created
+            elif event_id == "4720":
+                alerts.append(
+                    "[MEDIUM] New User Account Created (Event ID 4720)"
+                )
+
+            # User added to privileged group
+            elif event_id == "4732":
+                alerts.append(
+                    "[HIGH] User Added To Privileged Group (Event ID 4732)"
+                )
+
+except FileNotFoundError:
+    print("Error: events.log file not found.")
+    exit()
+
+# Detect brute-force style behavior
+if failed_logins >= 5:
+    alerts.append(
+        f"[HIGH] Possible Brute-Force Attack Detected ({failed_logins} failed logins)"
+    )
+
+# Print Report
+print("\n" + "=" * 50)
+print(" WINDOWS SECURITY LOG ANALYSIS REPORT ")
+print("=" * 50)
+
+print(f"\nSuccessful Logins : {successful_logins}")
+print(f"Failed Logins     : {failed_logins}")
+
+print("\nEvent Statistics")
+print("-" * 50)
+
+for event_id, count in sorted(event_counts.items()):
+    print(f"Event ID {event_id}: {count}")
+
+print("\nSecurity Alerts")
+print("-" * 50)
+
 if alerts:
     for alert in alerts:
-        print("-", alert)
+        print(alert)
 else:
-    print("- No critical security alerts triggered.")
+    print("No critical security alerts detected.")
+
+print("\nAnalysis Complete.")
+print("=" * 50)
+
